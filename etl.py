@@ -65,11 +65,27 @@ def process_song_data(spark, input_data, output_data):
 def process_log_data(spark, input_data, output_data):
 
     # get filepath to log data file
+    #log_data = input_data+"log_data/*/*/*.json"
     log_data = input_data+"log_data/*.json"
 
     # read log data file
     df = spark.read.json(log_data)
-        
+    
+    # filter by actions for song plays
+    df = df.filter(df.page == 'NextSong')
+
+    # extract columns for users table    
+    users_columns = ["userId", "firstName", "lastName", "gender", "level"]
+    users_table = df.select(users_columns) \
+    .withColumnRenamed("userId","user_id") \
+    .withColumnRenamed("firstName","first_name") \
+    .withColumnRenamed("lastName","last_name") \
+    .dropDuplicates()
+    
+    # write users table to parquet files
+    users_table.write.parquet(output_data + 'users/')
+
+
 #     # extract columns for users table    
 #     artists_table = 
     

@@ -236,6 +236,8 @@ Once that is done you should be able to see your output folder being created in 
 
 ![sc-1](https://github.com/JyotsnaP/Data-Lake/blob/master/images/sc-1.png)
 
+7. Repeat the above steps for user table, and time table
+
 
 
 
