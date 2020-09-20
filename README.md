@@ -234,7 +234,7 @@ NOTE:  monotonically_increasing_id - A column that generates monotonically incre
 
 Once that is done you should be able to see your output folder being created in your workspace like this:
 
-![sc-1](https://github.com/JyotsnaP/Data-Lake/images/sc-1.png)
+![sc-1](https://github.com/JyotsnaP/Data-Lake/blob/master/images/sc-1.png)
 
 
 
