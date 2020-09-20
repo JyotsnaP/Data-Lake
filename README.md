@@ -158,7 +158,7 @@ ___
 >>> from datetime import datetime
 >>> import os
 >>> from pyspark.sql import SparkSession
->>> from pyspark.sql.functions import udf, col
+>>> from pyspark.sql.functions import udf, col, monotonically_increasing_id
 >>> from pyspark.sql.functions import year, month, dayofmonth, hour, weekofyear, date_format
 >>> from pyspark.sql.types import StructType, StructField, DoubleType, StringType, IntegerType, DateType,TimestampType
 
@@ -220,4 +220,22 @@ df = spark.read.json("/home/workspace/data/log_data/2018-11-01-events.json")
 +-------+---------+---------+------+-------------+--------+---------+-----+--------------------+------+--------+-----------------+---------+------------+------+-------------+--------------------+------+
 
 ```
+
+
+6. Now to continue testing on local, set the `output_folder="output_data = "/home/workspace/output/""` and write the song_table in parquet format - where we have partitioned the df first by year, and then by artist_id. 
+
+
+```
+songs_table = df.select(song_columns).dropDuplicates().withColumn("song_id", monotonically_increasing_id())
+songs_table.write.partitionBy("year", "artist_id").parquet(output_data + 'songs/')
+```
+
+NOTE:  monotonically_increasing_id - A column that generates monotonically increasing 64-bit integers. The generated ID is guaranteed to be monotonically increasing and unique, but not consecutive
+
+Once that is done you should be able to see your output folder being created in your workspace like this:
+
+![sc-1](https://github.com/JyotsnaP/Data-Lake/images/sc-1.png)
+
+
+
 

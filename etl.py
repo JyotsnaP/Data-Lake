@@ -2,7 +2,7 @@ import configparser
 from datetime import datetime
 import os
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import udf, col
+from pyspark.sql.functions import udf, col, monotonically_increasing_id
 from pyspark.sql.functions import year, month, dayofmonth, hour, weekofyear, date_format
 from pyspark.sql.types import StructType, StructField, DoubleType, StringType, IntegerType, DateType,TimestampType
 
@@ -41,20 +41,26 @@ def process_song_data(spark, input_data, output_data):
     # read song data file
     df = spark.read.json(song_data ,schema=song_schema)
     
-    df.show(5)
-
     # extract columns to create songs table
-    #songs_table = 
+    song_columns = ["title", "artist_id","year", "duration"]
+    songs_table = df.select(song_columns).dropDuplicates().withColumn("song_id", monotonically_increasing_id())
+    songs_table.show(songs_table.count())
     
     # write songs table to parquet files partitioned by year and artist
-    #songs_table
-
+    songs_table.write.partitionBy("year", "artist_id").parquet(output_data + 'songs/')
+    
     # extract columns to create artists table
-    #artists_table = 
+    artists_columns = ["artist_id", "artist_name", "artist_location","artist_latitude", "artist_longitude"]
+
+    artists_table = df.select(artists_columns) \
+    .withColumnRenamed("artist_name","name") \
+    .withColumnRenamed("artist_location","location") \
+    .withColumnRenamed("artist_latitude","latitude") \
+    .withColumnRenamed("artist_longitude","longitude") \
+    .dropDuplicates()
     
     # write artists table to parquet files
-    #artists_table
-
+    artists_table.write.parquet(output_data + 'artists/')
 
 def process_log_data(spark, input_data, output_data):
 
@@ -63,12 +69,7 @@ def process_log_data(spark, input_data, output_data):
 
     # read log data file
     df = spark.read.json(log_data)
-    
-    df.show(5)
-    
-    # filter by actions for song plays
-#     df = 
-
+        
 #     # extract columns for users table    
 #     artists_table = 
     
@@ -103,7 +104,7 @@ def main():
     spark = create_spark_session()
     #input_data = "s3://udacity-dend/"
     input_data = "/home/workspace/data/"
-    output_data = ""
+    output_data = "/home/workspace/output/"
     
     process_song_data(spark, input_data, output_data)    
     process_log_data(spark, input_data, output_data)
