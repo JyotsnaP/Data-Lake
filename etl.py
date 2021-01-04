@@ -18,6 +18,7 @@ os.environ['AWS_SECRET_ACCESS_KEY']=config['AWS']['AWS_SECRET_ACCESS_KEY']
 
 
 def create_spark_session():
+    """Creates a new spark session """
     spark = SparkSession \
         .builder \
         .config("spark.jars.packages", "org.apache.hadoop:hadoop-aws:2.7.0") \
@@ -26,6 +27,13 @@ def create_spark_session():
 
 
 def process_song_data(spark, input_data, output_data):
+    
+    """
+    Using the given spark session, input data and output data -
+    This method effectively reads song data from the given input_data path 
+    and loads the songs_table and the artist_table 
+    by writing them in the parquet format to the output_data path
+    """
     
     # get filepath to song data file
     song_data = input_data+"song_data/*/*/*/*.json"
@@ -52,7 +60,7 @@ def process_song_data(spark, input_data, output_data):
     songs_table.show(songs_table.count())
     
     # write songs table to parquet files partitioned by year and artist
-    songs_table.write.partitionBy("year", "artist_id").parquet(output_data + 'songs/')
+    songs_table.write.parquet(os.path.join(output_data, "songs/"), mode='overwrite', partitionBy=["year","artist_id"])
     
     # extract columns to create artists table
     artists_columns = ["artist_id", "artist_name", "artist_location","artist_latitude",
@@ -64,11 +72,19 @@ def process_song_data(spark, input_data, output_data):
     .withColumnRenamed("artist_latitude","latitude") \
     .withColumnRenamed("artist_longitude","longitude") \
     .dropDuplicates()
+    artists_table = artists_table.dropDuplicates(['artist_id'])
     
     # write artists table to parquet files
-    artists_table.write.parquet(output_data + 'artists/')
+    artists_table.write.parquet(os.path.join(output_data, "artists/"), mode="overwrite")
 
 def process_log_data(spark, input_data, output_data):
+    
+    """
+    Using the given spark session, input data and output data -
+    This method effectively reads log data from the given input_data path 
+    and loads the users_table and the time_table and songplays_table
+    by writing them in the parquet format to the output_data path
+    """
 
     # get filepath to log data file
     log_data = input_data+"log_data/*.json"
@@ -88,7 +104,7 @@ def process_log_data(spark, input_data, output_data):
     .dropDuplicates()
     
     # write users table to parquet files
-    users_table.write.parquet(output_data + 'users/')
+    users_table.write.parquet(os.path.join(output_data, "users/"), mode="overwrite")
 
 
     # create timestamp column from original timestamp column
@@ -106,7 +122,7 @@ def process_log_data(spark, input_data, output_data):
     time_table=time_table.dropDuplicates()
     
     # write time table to parquet files partitioned by year and month
-    time_table.write.partitionBy("year", "month").parquet(output_data + 'time/')
+    time_table.write.parquet(os.path.join(output_data, "time/"), mode='overwrite', partitionBy=["year","month"])
 
 
     # read in log data & song data for songplays_table 
@@ -160,11 +176,15 @@ def process_log_data(spark, input_data, output_data):
     .dropDuplicates().repartition("year", "month")
 
     # write songplays table to parquet files partitioned by year and month
-    songplays_table.write.partitionBy("year", "month") \
-    .parquet(output_data + 'songplays/')
+    songplays_table.write.parquet(os.path.join(output_data, "songplays/"), \
+                                  mode='overwrite', partitionBy=["year","month"])
 
 
 def main():
+    """
+    This is the main method that is called when 
+    spark is instantiated.
+    """
     spark = create_spark_session()
     
     input_data = "s3://udacity-dend/"
